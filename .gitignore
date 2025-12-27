@@ -1,0 +1,11 @@
+target/
+**/target/
+build/
+**/build/
+.mvn/
+.gradle/
+logs/
+*.log
+*.class
+*.jar
+*.war
