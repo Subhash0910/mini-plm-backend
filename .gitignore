@@ -9,3 +9,5 @@ logs/
 *.class
 *.jar
 *.war
+mini-plm-backend/src/main/resources/application-local.properties
+
