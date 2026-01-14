@@ -12,5 +12,14 @@ logs/
 *.jar
 *.war
 
+
+
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
 # Local-only Spring profile (keep ignored)
 mini-plm-backend/src/main/resources/application-local.properties
