@@ -1,11 +1,13 @@
 package com.sam.mini_plm_backend.controller;
 
-import com.sam.mini_plm_backend.Model.Part;
+import com.sam.mini_plm_backend.entity.Part;
 import com.sam.mini_plm_backend.enums.LifecycleState;
 import com.sam.mini_plm_backend.repository.PartRepository;
 import com.sam.mini_plm_backend.repository.StateTransitionHistoryRepository;
 import com.sam.mini_plm_backend.service.LifecycleService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.sam.mini_plm_backend.service.PartService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +23,22 @@ import java.util.List;
 })
 public class PartController {
 
-    @Autowired
-    private PartRepository partRepository;
+    private final PartRepository partRepository;
+    private final LifecycleService lifecycleService;
+    private final StateTransitionHistoryRepository historyRepository;
+    private final PartService partService;
 
-    @Autowired
-    private LifecycleService lifecycleService;
-
-    @Autowired
-    private StateTransitionHistoryRepository historyRepository;
+    public PartController(
+            PartRepository partRepository,
+            LifecycleService lifecycleService,
+            StateTransitionHistoryRepository historyRepository,
+            PartService partService
+    ) {
+        this.partRepository = partRepository;
+        this.lifecycleService = lifecycleService;
+        this.historyRepository = historyRepository;
+        this.partService = partService;
+    }
 
     // =========================
     // BASIC CRUD
@@ -159,5 +169,20 @@ public class PartController {
                         historyRepository.findByPartOrderByTransitionDateDesc(p)
                 ))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // =========================
+    // SEARCH (Paginated)
+    // =========================
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<Part>> searchParts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String partNumber,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<Part> parts = partService.searchParts(name, partNumber, PageRequest.of(page, size));
+        return ResponseEntity.ok(parts);
     }
 }

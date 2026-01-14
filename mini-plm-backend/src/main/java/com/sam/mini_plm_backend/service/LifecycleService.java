@@ -1,7 +1,7 @@
 package com.sam.mini_plm_backend.service;
 
-import com.sam.mini_plm_backend.Model.Part;
-import com.sam.mini_plm_backend.Model.StateTransitionHistory;
+import com.sam.mini_plm_backend.entity.Part;
+import com.sam.mini_plm_backend.entity.StateTransitionHistory;
 import com.sam.mini_plm_backend.enums.LifecycleState;
 import com.sam.mini_plm_backend.repository.PartRepository;
 import com.sam.mini_plm_backend.repository.StateTransitionHistoryRepository;

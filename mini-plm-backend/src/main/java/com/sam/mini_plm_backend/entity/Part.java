@@ -1,4 +1,4 @@
-package com.sam.mini_plm_backend.Model;
+package com.sam.mini_plm_backend.entity;
 
 import com.sam.mini_plm_backend.enums.LifecycleState;
 import jakarta.persistence.*;

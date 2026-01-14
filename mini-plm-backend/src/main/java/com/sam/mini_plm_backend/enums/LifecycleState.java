@@ -37,4 +37,10 @@ public enum LifecycleState {
     public boolean isUsableInBOM() {
         return this == RELEASED;
     }
+
+    public enum Role {
+        ADMIN,      // Full access
+        ENGINEER,   // Can create, edit, manage parts and changes
+        VIEWER      // Read-only access
+    }
 }
