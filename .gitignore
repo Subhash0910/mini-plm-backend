@@ -2,12 +2,15 @@ target/
 **/target/
 build/
 **/build/
-.mvn/
+
+# DO NOT ignore .mvn (needed for mvnw on Render)
+
 .gradle/
 logs/
 *.log
 *.class
 *.jar
 *.war
-mini-plm-backend/src/main/resources/application-local.properties
 
+# Local-only Spring profile (keep ignored)
+mini-plm-backend/src/main/resources/application-local.properties
