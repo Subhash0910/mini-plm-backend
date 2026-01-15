@@ -23,6 +23,10 @@ public enum LifecycleState {
         return sequence;
     }
 
+    /**
+     * Get the next state in the lifecycle progression
+     * IN_WORK -> PROTOTYPE_IN_WORK -> PROTOTYPE -> RELEASED
+     */
     public LifecycleState getNextState() {
         if (this == IN_WORK) return PROTOTYPE_IN_WORK;
         if (this == PROTOTYPE_IN_WORK) return PROTOTYPE;
@@ -30,17 +34,25 @@ public enum LifecycleState {
         return this; // RELEASED and OBSOLETE don't auto-promote
     }
 
+    /**
+     * Check if this state allows editing
+     */
     public boolean isEditable() {
         return this == IN_WORK || this == PROTOTYPE_IN_WORK || this == PROTOTYPE;
     }
 
+    /**
+     * Check if this part can be used in BOM (Bill of Materials)
+     * Only RELEASED parts can be used
+     */
     public boolean isUsableInBOM() {
         return this == RELEASED;
     }
 
-    public enum Role {
-        ADMIN,      // Full access
-        ENGINEER,   // Can create, edit, manage parts and changes
-        VIEWER      // Read-only access
+    /**
+     * Check if this state is a final state
+     */
+    public boolean isFinal() {
+        return this == RELEASED || this == OBSOLETE;
     }
 }
