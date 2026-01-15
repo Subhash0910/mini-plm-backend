@@ -31,9 +31,9 @@ public class GlobalExceptionHandler {
         logger.warn("Validation error: {}", message);
 
         ErrorResponse error = new ErrorResponse(
-                "VALIDATION_ERROR",
-                message,
-                LocalDateTime.now()
+                HttpStatus.UNPROCESSABLE_ENTITY.value(),  // int (422)
+                message,                                   // String message
+                "VALIDATION_ERROR"                         // String error code
         );
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
     }
@@ -43,9 +43,9 @@ public class GlobalExceptionHandler {
         logger.warn("Part not found: {}", ex.getMessage());
 
         ErrorResponse error = new ErrorResponse(
-                "PART_NOT_FOUND",
-                ex.getMessage(),
-                LocalDateTime.now()
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),            // ✅ Use ex.getMessage()
+                "PART_NOT_FOUND"
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
@@ -55,9 +55,9 @@ public class GlobalExceptionHandler {
         logger.warn("Business rule violation: {}", ex.getMessage());
 
         ErrorResponse error = new ErrorResponse(
-                "BUSINESS_RULE_VIOLATION",
+                HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
+                "BUSINESS_RULE_VIOLATION"
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -67,9 +67,9 @@ public class GlobalExceptionHandler {
         logger.error("Unexpected error occurred", ex);
 
         ErrorResponse error = new ErrorResponse(
-                "INTERNAL_ERROR",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "An unexpected error occurred. Please try again later.",
-                LocalDateTime.now()
+                "INTERNAL_ERROR"
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

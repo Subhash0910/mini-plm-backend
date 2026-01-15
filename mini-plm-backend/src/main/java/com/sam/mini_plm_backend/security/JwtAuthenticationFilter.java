@@ -24,11 +24,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * IMPORTANT FIX:
+     * Do NOT run JWT validation for public endpoints like /api/auth/**.
+     * Otherwise signup/login will return 401 even if SecurityConfig says permitAll().
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/api/auth/")
+                || path.startsWith("/api/health")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs");
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         try {
             String token = extractTokenFromRequest(request);
@@ -36,20 +52,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(token) && jwtUtil.isTokenValid(token)) {
                 String username = jwtUtil.getUsernameFromToken(token);
 
-                // Create authentication token
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(
                                 username,
                                 null,
-                                new ArrayList<>() // Empty authorities - will be loaded from database if needed
+                                new ArrayList<>() // authorities empty for now
                         );
 
-                // Set request details
                 authenticationToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                // Set authentication in security context
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         } catch (JwtException | IllegalArgumentException e) {
@@ -67,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // Remove "Bearer " prefix
+            return bearerToken.substring(7);
         }
 
         return null;
