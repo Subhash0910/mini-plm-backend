@@ -78,14 +78,24 @@ public class BomService {
     }
 
     // Get active BOM for a part
+    // FIX: Return null instead of throwing exception if no active BOM exists
+    // This allows frontend to show "No BOM created yet" message gracefully
     public BOMResponse getActiveBOMForPart(Long parentPartId) {
         Part part = partRepository.findById(parentPartId)
                 .orElseThrow(() -> new RuntimeException("Part not found"));
 
+        // FIX: Use Optional.orElse(null) instead of orElseThrow()
+        // This returns null if no active BOM found, instead of throwing exception
         BOM activeBOM = bomRepository.findByParentPartAndIsActiveTrue(part)
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No active BOM found for this part"));
+                .orElse(null);  // Return null if no active BOM
+
+        // If no active BOM found, return null
+        // Frontend will display "No active BOM for this part" message
+        if (activeBOM == null) {
+            return null;
+        }
 
         // FIX: Force load bomLines collection while transaction is active
         activeBOM.getBomLines().size();
