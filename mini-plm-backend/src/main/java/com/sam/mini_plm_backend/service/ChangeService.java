@@ -23,7 +23,8 @@ public class ChangeService {
     private final ChangeHistoryRepository changeHistoryRepository;
 
     /**
-     * Create a new change request with approval workflow
+     * Create a new change request with approval workflow (Windchill‑like)
+     * Flow: DRAFT (on create) -> PENDING_APPROVAL (on submit) -> APPROVED/REJECTED -> IMPLEMENTED
      */
     public ChangeResponse createChange(CreateChangeRequest request, String userId) {
         Change change = Change.builder()
@@ -32,7 +33,8 @@ public class ChangeService {
                 .type(request.getChangeType())
                 .priority(request.getPriority())
                 .createdBy(userId)
-                .status(ChangeStatus.PENDING_APPROVAL)
+                // Start as DRAFT, like Windchill "Create Change Notice" before routing
+                .status(ChangeStatus.DRAFT)
                 .impactAssessment(request.getImpactAssessment())
                 .assignedTo(request.getAssignedTo())
                 .dueDate(request.getDueDate())
@@ -46,10 +48,31 @@ public class ChangeService {
 
         Change savedChange = changeRepository.save(change);
 
+        // History: creation as DRAFT
+        logChangeHistory(savedChange, null, ChangeStatus.DRAFT, "Change request created as DRAFT", userId);
+
+        return mapToResponse(savedChange);
+    }
+
+    /**
+     * Explicitly submit a DRAFT change into the approval workflow.
+     * This is the Windchill‑style "Submit for Review" step.
+     */
+    public ChangeResponse submitChange(Long changeId, SubmitChangeRequest request, String userId) {
+        Change change = changeRepository.findById(changeId)
+                .orElseThrow(() -> new RuntimeException("Change not found with ID: " + changeId));
+
+        if (change.getStatus() != ChangeStatus.DRAFT) {
+            throw new RuntimeException("Only DRAFT changes can be submitted. Current status: " + change.getStatus());
+        }
+
+        ChangeStatus oldStatus = change.getStatus();
+
+        // Attach approvers on submit
         if (request.getApproverIds() != null && !request.getApproverIds().isEmpty()) {
             for (int i = 0; i < request.getApproverIds().size(); i++) {
                 ChangeApproval approval = ChangeApproval.builder()
-                        .change(savedChange)
+                        .change(change)
                         .approverId(request.getApproverIds().get(i))
                         .approvalOrder(i + 1)
                         .status(ApprovalStatus.PENDING)
@@ -58,9 +81,14 @@ public class ChangeService {
             }
         }
 
-        logChangeHistory(savedChange, null, ChangeStatus.PENDING_APPROVAL, "Change request created", userId);
+        change.setStatus(ChangeStatus.PENDING_APPROVAL);
+        change.setLastModifiedBy(userId);
+        change.setLastModifiedAt(LocalDateTime.now());
 
-        return mapToResponse(savedChange);
+        Change updated = changeRepository.save(change);
+        logChangeHistory(updated, oldStatus, ChangeStatus.PENDING_APPROVAL, "Submitted for approval", userId);
+
+        return mapToResponse(updated);
     }
 
     /**
