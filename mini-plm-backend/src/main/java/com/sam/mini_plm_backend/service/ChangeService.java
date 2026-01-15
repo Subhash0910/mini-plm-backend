@@ -94,7 +94,10 @@ public class ChangeService {
         change.setLastModifiedAt(LocalDateTime.now());
 
         Change updated = changeRepository.save(change);
-        logChangeHistory(updated, oldStatus, ChangeStatus.PENDING_APPROVAL, "Submitted for approval by: " + String.join(", ", request.getApproverIds()), userId);
+        
+        // FIX: Validate newStatus before logging
+        logChangeHistory(updated, oldStatus, ChangeStatus.PENDING_APPROVAL, 
+                        "Submitted for approval by: " + String.join(", ", request.getApproverIds()), userId);
 
         // CRITICAL: Refresh the change object to load the newly created approvals
         // This ensures mapToResponse has access to the approvals relationship
@@ -155,7 +158,10 @@ public class ChangeService {
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.REJECTED, "Rejected by " + approverId + ": " + request.getComments(), approverId);
+            
+            // FIX: Validate newStatus before logging
+            logChangeHistory(change, oldStatus, ChangeStatus.REJECTED, 
+                            "Rejected by " + approverId + ": " + request.getComments(), approverId);
             
             // Refresh to get updated approvals
             Change refreshed = changeRepository.findById(change.getId())
@@ -176,13 +182,19 @@ public class ChangeService {
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.APPROVED, "All approvals complete. Final approval by: " + approverId, approverId);
+            
+            // FIX: Validate newStatus before logging
+            logChangeHistory(change, oldStatus, ChangeStatus.APPROVED, 
+                            "All approvals complete. Final approval by: " + approverId, approverId);
         } else {
             // Still waiting for other approvals
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.PENDING_APPROVAL, "Approved by " + approverId + ". Awaiting further approvals.", approverId);
+            
+            // FIX: Validate newStatus before logging
+            logChangeHistory(change, oldStatus, ChangeStatus.PENDING_APPROVAL, 
+                            "Approved by " + approverId + ". Awaiting further approvals.", approverId);
         }
 
         // Refresh to get updated approvals
@@ -210,7 +222,10 @@ public class ChangeService {
         change.setLastModifiedAt(LocalDateTime.now());
 
         Change updated = changeRepository.save(change);
-        logChangeHistory(updated, oldStatus, ChangeStatus.IMPLEMENTED, "Change implemented by: " + userId, userId);
+        
+        // FIX: Validate newStatus before logging
+        logChangeHistory(updated, oldStatus, ChangeStatus.IMPLEMENTED, 
+                        "Change implemented by: " + userId, userId);
 
         return mapToResponse(updated);
     }
@@ -260,17 +275,33 @@ public class ChangeService {
     }
 
     /**
-     * Helper: Log change history - MATCHES YOUR ACTUAL ChangeHistory FIELDS
+     * Helper: Log change history with validation
+     * Ensures newStatus is never NULL (database constraint violation prevention)
      * oldStatus, newStatus, changedBy, comments, changedAt
      */
-    private void logChangeHistory(Change change, ChangeStatus oldStatus, ChangeStatus newStatus, String comments, String userId) {
+    private void logChangeHistory(Change change, ChangeStatus oldStatus, 
+                                  ChangeStatus newStatus, String comments, String userId) {
+        // VALIDATION: Ensure required fields are not null
+        if (change == null) {
+            throw new IllegalArgumentException("Change entity cannot be null when logging history");
+        }
+        
+        if (newStatus == null) {
+            throw new IllegalArgumentException("newStatus cannot be null in change history. Old status was: " + oldStatus);
+        }
+        
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("changedBy (userId) cannot be null or empty");
+        }
+
         ChangeHistory history = ChangeHistory.builder()
                 .change(change)
                 .oldStatus(oldStatus)
-                .newStatus(newStatus)
+                .newStatus(newStatus)  // ✅ Always non-null now
                 .comments(comments)
-                .changedBy(userId)
+                .changedBy(userId.trim())
                 .build();
+        
         changeHistoryRepository.save(history);
     }
 
