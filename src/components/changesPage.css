@@ -1,0 +1,135 @@
+.wc-changes-page {
+  padding: 20px;
+}
+
+.wc-changes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
+.wc-changes-header > div:first-child {
+  flex: 1;
+}
+
+.wc-changes-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.wc-changes-sub {
+  margin: 8px 0 0 0;
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.wc-changes-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wc-changes-actions .form-select {
+  min-width: 180px;
+}
+
+.wc-changes-table-wrap {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.wc-changes-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.wc-changes-table thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.wc-changes-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wc-changes-table tbody tr {
+  border-bottom: 1px solid #dee2e6;
+  transition: background 0.2s;
+}
+
+.wc-changes-table tbody tr:hover {
+  background: #f8f9fa;
+  cursor: pointer;
+}
+
+.wc-changes-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.wc-changes-table td {
+  padding: 15px;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.wc-changes-id {
+  font-weight: 600;
+  color: #007bff;
+}
+
+.wc-changes-number {
+  font-family: monospace;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.wc-changes-title {
+  font-weight: 500;
+  color: #495057;
+}
+
+.wc-status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wc-changes-empty {
+  text-align: center;
+  padding: 40px 15px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.wc-changes-info {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.wc-changes-error {
+  padding: 15px;
+  background: #f8d7da;
+  color: #721c24;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
