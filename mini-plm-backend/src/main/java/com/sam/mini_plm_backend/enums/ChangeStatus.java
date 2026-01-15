@@ -6,5 +6,6 @@ public enum ChangeStatus {
     APPROVED,
     IMPLEMENTED,
     REJECTED,
-    CANCELLED
+    CANCELLED,
+    PENDING_APPROVAL
 }
