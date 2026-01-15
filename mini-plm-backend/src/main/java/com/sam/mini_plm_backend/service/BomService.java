@@ -62,13 +62,18 @@ public class BomService {
             bomLineRepository.save(line);
         }
 
-        return mapToResponse(bomRepository.findById(savedBOM.getId()).get());
+        BOM result = bomRepository.findById(savedBOM.getId()).get();
+        // FIX: Force load bomLines collection
+        result.getBomLines().size();
+        return mapToResponse(result);
     }
 
     // Get BOM by ID
     public BOMResponse getBOMById(Long bomId) {
         BOM bom = bomRepository.findById(bomId)
                 .orElseThrow(() -> new RuntimeException("BOM not found"));
+        // FIX: Force load bomLines collection
+        bom.getBomLines().size();
         return mapToResponse(bom);
     }
 
@@ -82,6 +87,9 @@ public class BomService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No active BOM found for this part"));
 
+        // FIX: Force load bomLines collection while transaction is active
+        activeBOM.getBomLines().size();
+        
         return mapToResponse(activeBOM);
     }
 
@@ -90,8 +98,12 @@ public class BomService {
         Part part = partRepository.findById(parentPartId)
                 .orElseThrow(() -> new RuntimeException("Part not found"));
 
-        return bomRepository.findByParentPart(part)
-                .stream()
+        List<BOM> boms = bomRepository.findByParentPart(part);
+        
+        // FIX: Force load bomLines for all BOMs
+        boms.forEach(bom -> bom.getBomLines().size());
+        
+        return boms.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -112,6 +124,9 @@ public class BomService {
         BOM bom = bomRepository.findById(bomId)
                 .orElseThrow(() -> new RuntimeException("BOM not found"));
 
+        // FIX: Force load bomLines
+        bom.getBomLines().size();
+        
         List<BOMLineDto> result = new java.util.ArrayList<>();
         flattenBOM(bom, result, 0);
         return result;
@@ -138,7 +153,10 @@ public class BomService {
             if (component.getIsAssembly() && level < 10) {  // Prevent infinite recursion
                 List<BOM> subBOMs = bomRepository.findByParentPartAndIsActiveTrue(component);
                 if (!subBOMs.isEmpty()) {
-                    flattenBOM(subBOMs.get(0), result, level + 1);
+                    BOM subBOM = subBOMs.get(0);
+                    // FIX: Force load bomLines for sub-BOMs
+                    subBOM.getBomLines().size();
+                    flattenBOM(subBOM, result, level + 1);
                 }
             }
         }
