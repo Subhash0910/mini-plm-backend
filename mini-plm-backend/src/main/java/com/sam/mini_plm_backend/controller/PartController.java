@@ -25,7 +25,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/parts")
+// NOTE: server.servlet.context-path=/api already prefixes all endpoints.
+// Keep controller mappings relative to the context-path to avoid /api/api/*.
+@RequestMapping("/parts")
 public class PartController {
 
     private static final Logger logger = LoggerFactory.getLogger(PartController.class);
