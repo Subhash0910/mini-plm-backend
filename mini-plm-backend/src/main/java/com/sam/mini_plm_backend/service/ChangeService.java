@@ -66,19 +66,27 @@ public class ChangeService {
             throw new RuntimeException("Only DRAFT changes can be submitted. Current status: " + change.getStatus());
         }
 
+        // VALIDATION: approverIds must not be empty
+        if (request.getApproverIds() == null || request.getApproverIds().isEmpty()) {
+            throw new RuntimeException("At least one approver is required to submit a change");
+        }
+
         ChangeStatus oldStatus = change.getStatus();
 
-        // Attach approvers on submit
-        if (request.getApproverIds() != null && !request.getApproverIds().isEmpty()) {
-            for (int i = 0; i < request.getApproverIds().size(); i++) {
-                ChangeApproval approval = ChangeApproval.builder()
-                        .change(change)
-                        .approverId(request.getApproverIds().get(i))
-                        .approvalOrder(i + 1)
-                        .status(ApprovalStatus.PENDING)
-                        .build();
-                changeApprovalRepository.save(approval);
+        // Attach approvers on submit (in order)
+        for (int i = 0; i < request.getApproverIds().size(); i++) {
+            String approverId = request.getApproverIds().get(i);
+            if (approverId == null || approverId.trim().isEmpty()) {
+                throw new RuntimeException("Approver ID at position " + (i + 1) + " cannot be empty");
             }
+
+            ChangeApproval approval = ChangeApproval.builder()
+                    .change(change)
+                    .approverId(approverId.trim())
+                    .approvalOrder(i + 1)
+                    .status(ApprovalStatus.PENDING)
+                    .build();
+            changeApprovalRepository.save(approval);
         }
 
         change.setStatus(ChangeStatus.PENDING_APPROVAL);
@@ -86,9 +94,14 @@ public class ChangeService {
         change.setLastModifiedAt(LocalDateTime.now());
 
         Change updated = changeRepository.save(change);
-        logChangeHistory(updated, oldStatus, ChangeStatus.PENDING_APPROVAL, "Submitted for approval", userId);
+        logChangeHistory(updated, oldStatus, ChangeStatus.PENDING_APPROVAL, "Submitted for approval by: " + String.join(", ", request.getApproverIds()), userId);
 
-        return mapToResponse(updated);
+        // CRITICAL: Refresh the change object to load the newly created approvals
+        // This ensures mapToResponse has access to the approvals relationship
+        Change refreshed = changeRepository.findById(updated.getId())
+                .orElseThrow(() -> new RuntimeException("Failed to refresh change after submit"));
+        
+        return mapToResponse(refreshed);
     }
 
     /**
@@ -117,9 +130,17 @@ public class ChangeService {
         Change change = changeRepository.findById(changeId)
                 .orElseThrow(() -> new RuntimeException("Change not found with ID: " + changeId));
 
+        // Normalize approver ID (trim whitespace)
+        String normalizedApproverId = approverId.trim();
+
         ChangeApproval approval = changeApprovalRepository
-                .findByChangeAndApproverIdAndStatus(change, approverId, ApprovalStatus.PENDING)
-                .orElseThrow(() -> new RuntimeException("No pending approval found for approver: " + approverId));
+                .findByChangeAndApproverIdAndStatus(change, normalizedApproverId, ApprovalStatus.PENDING)
+                .orElseThrow(() -> new RuntimeException("No pending approval found for approver: " + approverId + ". Change ID: " + changeId));
+
+        // Validate status
+        if (request.getStatus() != ApprovalStatus.APPROVED && request.getStatus() != ApprovalStatus.REJECTED) {
+            throw new RuntimeException("Invalid approval status: " + request.getStatus());
+        }
 
         approval.setStatus(request.getStatus());
         approval.setComments(request.getComments());
@@ -134,8 +155,12 @@ public class ChangeService {
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.REJECTED, "Rejected: " + request.getComments(), approverId);
-            return mapToResponse(change);
+            logChangeHistory(change, oldStatus, ChangeStatus.REJECTED, "Rejected by " + approverId + ": " + request.getComments(), approverId);
+            
+            // Refresh to get updated approvals
+            Change refreshed = changeRepository.findById(change.getId())
+                    .orElseThrow(() -> new RuntimeException("Failed to refresh change"));
+            return mapToResponse(refreshed);
         }
 
         // Check if all approvals are complete
@@ -151,16 +176,19 @@ public class ChangeService {
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.APPROVED, "All approvals complete", approverId);
+            logChangeHistory(change, oldStatus, ChangeStatus.APPROVED, "All approvals complete. Final approval by: " + approverId, approverId);
         } else {
             // Still waiting for other approvals
             change.setLastModifiedBy(approverId);
             change.setLastModifiedAt(LocalDateTime.now());
             changeRepository.save(change);
-            logChangeHistory(change, oldStatus, ChangeStatus.PENDING_APPROVAL, "Approved by " + approverId, approverId);
+            logChangeHistory(change, oldStatus, ChangeStatus.PENDING_APPROVAL, "Approved by " + approverId + ". Awaiting further approvals.", approverId);
         }
 
-        return mapToResponse(change);
+        // Refresh to get updated approvals
+        Change refreshed = changeRepository.findById(change.getId())
+                .orElseThrow(() -> new RuntimeException("Failed to refresh change"));
+        return mapToResponse(refreshed);
     }
 
     /**
@@ -182,7 +210,7 @@ public class ChangeService {
         change.setLastModifiedAt(LocalDateTime.now());
 
         Change updated = changeRepository.save(change);
-        logChangeHistory(updated, oldStatus, ChangeStatus.IMPLEMENTED, "Change implemented", userId);
+        logChangeHistory(updated, oldStatus, ChangeStatus.IMPLEMENTED, "Change implemented by: " + userId, userId);
 
         return mapToResponse(updated);
     }
