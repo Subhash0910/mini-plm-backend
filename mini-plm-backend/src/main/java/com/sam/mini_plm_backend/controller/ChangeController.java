@@ -30,6 +30,19 @@ public class ChangeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * Windchill-like explicit submit step: DRAFT -> PENDING_APPROVAL.
+     */
+    @PostMapping("/{changeId}/submit")
+    public ResponseEntity<ChangeResponse> submitChange(
+            @PathVariable Long changeId,
+            @Valid @RequestBody SubmitChangeRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        ChangeResponse response = changeService.submitChange(changeId, request, userId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     public ResponseEntity<List<ChangeResponse>> getAllChanges() {
         return ResponseEntity.ok(changeService.getAllChanges());
