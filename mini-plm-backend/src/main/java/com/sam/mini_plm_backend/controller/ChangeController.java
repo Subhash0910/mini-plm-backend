@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/changes")
+// NOTE: server.servlet.context-path=/api already prefixes all endpoints.
+// Keep controller mappings relative to the context-path to avoid /api/api/*.
+@RequestMapping("/changes")
 @RequiredArgsConstructor
 public class ChangeController {
 
