@@ -33,8 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = extractTokenFromRequest(request);
 
-            if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
-                String username = jwtUtil.extractUsername(token);
+            if (StringUtils.hasText(token) && jwtUtil.isTokenValid(token)) {
+                String username = jwtUtil.getUsernameFromToken(token);
 
                 // Create authentication token
                 UsernamePasswordAuthenticationToken authenticationToken =
@@ -55,7 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException | IllegalArgumentException e) {
             logger.error("Cannot set user authentication: " + e.getMessage(), e);
         }
-
 
         filterChain.doFilter(request, response);
     }

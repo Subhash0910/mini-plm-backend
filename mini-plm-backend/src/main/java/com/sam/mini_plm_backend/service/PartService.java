@@ -141,4 +141,11 @@ public class PartService {
         existing.setLastModifiedDate(LocalDateTime.now());
         partRepository.save(existing);
     }
+    // Add to PartService.java (service layer)
+    public Part getPartEntity(Long id) {
+        return partRepository.findById(id)
+                .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
+                .orElseThrow(() -> new PartNotFoundException(id));
+    }
+
 }

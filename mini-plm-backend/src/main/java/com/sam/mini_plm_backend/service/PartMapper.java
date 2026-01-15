@@ -1,6 +1,7 @@
 package com.sam.mini_plm_backend.service;
 
 import com.sam.mini_plm_backend.dto.CreatePartRequest;
+import com.sam.mini_plm_backend.dto.LifecycleTransitionResponse;
 import com.sam.mini_plm_backend.dto.PartResponse;
 import com.sam.mini_plm_backend.entity.Part;
 import com.sam.mini_plm_backend.enums.LifecycleState;
@@ -58,4 +59,22 @@ public class PartMapper {
                 .isAssembly(part.getIsAssembly())
                 .build();
     }
+    public LifecycleTransitionResponse toTransitionResponse(Part part) {
+        if (part == null) {
+            return null;
+        }
+        return LifecycleTransitionResponse.builder()
+                .id(part.getId())
+                .partNumber(part.getPartNumber())
+                .name(part.getName())
+                .lifecycleState(part.getLifecycleState())
+                .revisionNumber(part.getRevisionNumber())
+                .revisionSequence(part.getRevisionSequence())
+                .lastModifiedDate(part.getLastModifiedDate())
+                .lastModifiedBy(part.getLastModifiedBy())
+                .releasedDate(part.getReleasedDate())
+                .obsoleteDate(part.getObsoleteDate())
+                .build();
+    }
+
 }

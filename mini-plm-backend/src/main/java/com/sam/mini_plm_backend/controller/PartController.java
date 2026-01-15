@@ -1,12 +1,14 @@
 package com.sam.mini_plm_backend.controller;
 
 import com.sam.mini_plm_backend.dto.CreatePartRequest;
+import com.sam.mini_plm_backend.dto.LifecycleTransitionResponse;
 import com.sam.mini_plm_backend.dto.PartResponse;
 import com.sam.mini_plm_backend.dto.UpdatePartRequest;
 import com.sam.mini_plm_backend.entity.Part;
-import com.sam.mini_plm_backend.repository.PartRepository;
+import com.sam.mini_plm_backend.entity.StateTransitionHistory;
 import com.sam.mini_plm_backend.repository.StateTransitionHistoryRepository;
 import com.sam.mini_plm_backend.service.LifecycleService;
+import com.sam.mini_plm_backend.service.PartMapper;
 import com.sam.mini_plm_backend.service.PartService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/parts")
@@ -25,21 +29,21 @@ import jakarta.validation.Valid;
 })
 public class PartController {
 
-    private final PartRepository partRepository;
     private final LifecycleService lifecycleService;
     private final StateTransitionHistoryRepository historyRepository;
     private final PartService partService;
+    private final PartMapper partMapper;
 
     public PartController(
-            PartRepository partRepository,
             LifecycleService lifecycleService,
             StateTransitionHistoryRepository historyRepository,
-            PartService partService
+            PartService partService,
+            PartMapper partMapper
     ) {
-        this.partRepository = partRepository;
         this.lifecycleService = lifecycleService;
         this.historyRepository = historyRepository;
         this.partService = partService;
+        this.partMapper = partMapper;
     }
 
     // =========================
@@ -49,11 +53,25 @@ public class PartController {
     @GetMapping
     public ResponseEntity<Page<PartResponse>> getAllParts(
             @RequestParam(required = false) String lifecycleState,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String partNumber,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<PartResponse> result = partService.getAllParts(lifecycleState, pageable);
+        Page<PartResponse> result;
+
+        // If search parameters provided, use search
+        if (name != null || partNumber != null) {
+            result = partService.searchParts(name, partNumber, pageable);
+        } else if (lifecycleState != null) {
+            // Filter by lifecycle state
+            result = partService.getAllParts(lifecycleState, pageable);
+        } else {
+            // Get all parts
+            result = partService.getAllParts(null, pageable);
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -93,30 +111,30 @@ public class PartController {
     // =========================
 
     @PostMapping("/{id}/promote")
-    public ResponseEntity<?> promote(
+    public ResponseEntity<LifecycleTransitionResponse> promote(
             @PathVariable Long id,
             @RequestParam(defaultValue = "system") String transitionedBy
     ) throws Exception {
         Part part = lifecycleService.promote(id, transitionedBy);
-        return ResponseEntity.ok(part);
+        return ResponseEntity.ok(partMapper.toTransitionResponse(part));
     }
 
     @PostMapping("/{id}/revise")
-    public ResponseEntity<?> revise(
+    public ResponseEntity<LifecycleTransitionResponse> revise(
             @PathVariable Long id,
             @RequestParam(defaultValue = "system") String transitionedBy
     ) throws Exception {
         Part part = lifecycleService.revise(id, transitionedBy);
-        return ResponseEntity.ok(part);
+        return ResponseEntity.ok(partMapper.toTransitionResponse(part));
     }
 
     @PostMapping("/{id}/obsolete")
-    public ResponseEntity<?> obsolete(
+    public ResponseEntity<LifecycleTransitionResponse> obsolete(
             @PathVariable Long id,
             @RequestParam(defaultValue = "system") String transitionedBy
     ) throws Exception {
         Part part = lifecycleService.markObsolete(id, transitionedBy);
-        return ResponseEntity.ok(part);
+        return ResponseEntity.ok(partMapper.toTransitionResponse(part));
     }
 
     // =========================
@@ -124,27 +142,9 @@ public class PartController {
     // =========================
 
     @GetMapping("/{id}/history")
-    public ResponseEntity<?> history(@PathVariable Long id) {
-        return partRepository.findById(id)
-                .<ResponseEntity<?>>map(p -> ResponseEntity.ok(
-                        historyRepository.findByPartOrderByTransitionDateDesc(p)
-                ))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // =========================
-    // SEARCH (Paginated)
-    // =========================
-
-    @GetMapping("/search")
-    public ResponseEntity<Page<PartResponse>> searchParts(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String partNumber,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<PartResponse> parts = partService.searchParts(name, partNumber, pageable);
-        return ResponseEntity.ok(parts);
+    public ResponseEntity<List<StateTransitionHistory>> history(@PathVariable Long id) {
+        Part part = partService.getPartEntity(id);
+        List<StateTransitionHistory> histories = historyRepository.findByPartOrderByTransitionDateDesc(part);
+        return ResponseEntity.ok(histories);
     }
 }

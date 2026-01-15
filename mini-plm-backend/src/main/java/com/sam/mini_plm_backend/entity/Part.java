@@ -117,6 +117,7 @@ public class Part {
     private Part parentPart;
 
     @OneToMany(mappedBy = "parentPart", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Part> subParts = new ArrayList<>();
 
     @Column(name = "quantity_required")

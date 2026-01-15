@@ -1,13 +1,10 @@
 package com.sam.mini_plm_backend.service;
 
-
 import com.sam.mini_plm_backend.enums.Role;
-
 import com.sam.mini_plm_backend.dto.LoginRequest;
 import com.sam.mini_plm_backend.dto.SignupRequest;
 import com.sam.mini_plm_backend.dto.AuthResponse;
 import com.sam.mini_plm_backend.entity.User;
-import com.sam.mini_plm_backend.enums.LifecycleState;
 import com.sam.mini_plm_backend.repository.UserRepository;
 import com.sam.mini_plm_backend.security.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -51,7 +48,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        String token = jwtUtil.generateToken(savedUser);
+        String token = jwtUtil.generateToken(savedUser.getUsername());
 
         return AuthResponse.builder()
                 .id(savedUser.getId())
@@ -74,7 +71,7 @@ public class AuthService {
             throw new RuntimeException("User account is deactivated");
         }
 
-        String token = jwtUtil.generateToken(user);
+        String token = jwtUtil.generateToken(user.getUsername());
 
         return AuthResponse.builder()
                 .id(user.getId())
@@ -85,4 +82,3 @@ public class AuthService {
                 .build();
     }
 }
-
