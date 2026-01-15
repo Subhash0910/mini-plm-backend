@@ -11,6 +11,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
@@ -25,18 +28,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * IMPORTANT FIX:
-     * Do NOT run JWT validation for public endpoints like /api/auth/**.
-     * Otherwise signup/login will return 401 even if SecurityConfig says permitAll().
+     * CRITICAL FIX:
+     * Do NOT run JWT validation for public endpoints like /auth/**.
+     * The context-path=/api is prepended by Spring Boot, so we check for /auth/**
+     * otherwise signup/login will return 401 even if SecurityConfig says permitAll().
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
+        logger.debug("Checking filter bypass for path: {}", path);
 
-        return path.startsWith("/api/auth/")
+        boolean shouldSkip = path.startsWith("/api/auth/")
                 || path.startsWith("/api/health")
                 || path.startsWith("/swagger-ui/")
-                || path.startsWith("/v3/api-docs");
+                || path.startsWith("/v3/api-docs")
+                || path.equals("/api")
+                || path.equals("/");
+        
+        if (shouldSkip) {
+            logger.debug("Skipping JWT filter for path: {}", path);
+        }
+        
+        return shouldSkip;
     }
 
     @Override
@@ -49,24 +62,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = extractTokenFromRequest(request);
 
-            if (StringUtils.hasText(token) && jwtUtil.isTokenValid(token)) {
-                String username = jwtUtil.getUsernameFromToken(token);
+            if (StringUtils.hasText(token)) {
+                if (jwtUtil.isTokenValid(token)) {
+                    String username = jwtUtil.getUsernameFromToken(token);
+                    logger.debug("Setting authentication for user: {}", username);
 
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                new ArrayList<>() // authorities empty for now
-                        );
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    new ArrayList<>()
+                            );
 
-                authenticationToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    authenticationToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                } else {
+                    logger.warn("Invalid JWT token for request: {}", request.getRequestURI());
+                }
             }
         } catch (JwtException | IllegalArgumentException e) {
-            logger.error("Cannot set user authentication: " + e.getMessage(), e);
+            logger.error("Cannot set user authentication: {}", e.getMessage(), e);
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
