@@ -97,28 +97,31 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/health").permitAll()
-                        .requestMatchers("/api/health/**").permitAll()
+                        // FIX: Remove /api prefix - server.servlet.context-path=/api handles it
+                        // Paths are evaluated relative to context-path
+                        .requestMatchers(HttpMethod.POST, "/auth/signup").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/health").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/", "/index.html", "/static/**", "/assets/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/parts/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
-                        .requestMatchers(HttpMethod.POST, "/api/parts").hasAnyRole("ADMIN", "ENGINEER")
-                        .requestMatchers(HttpMethod.PUT, "/api/parts/**").hasAnyRole("ADMIN", "ENGINEER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/parts/**").hasRole("ADMIN")
+                        // Protected endpoints - require authentication and specific roles
+                        .requestMatchers(HttpMethod.GET, "/parts/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/parts").hasAnyRole("ADMIN", "ENGINEER")
+                        .requestMatchers(HttpMethod.PUT, "/parts/**").hasAnyRole("ADMIN", "ENGINEER")
+                        .requestMatchers(HttpMethod.DELETE, "/parts/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/bom/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
-                        .requestMatchers(HttpMethod.POST, "/api/bom/**").hasAnyRole("ADMIN", "ENGINEER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/bom/**").hasAnyRole("ADMIN", "ENGINEER")
+                        .requestMatchers(HttpMethod.GET, "/bom/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/bom/**").hasAnyRole("ADMIN", "ENGINEER")
+                        .requestMatchers(HttpMethod.DELETE, "/bom/**").hasAnyRole("ADMIN", "ENGINEER")
 
-                        .requestMatchers(HttpMethod.GET, "/api/changes/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
-                        .requestMatchers(HttpMethod.POST, "/api/changes").hasRole("ENGINEER")
-                        .requestMatchers(HttpMethod.PUT, "/api/changes/**").hasRole("ENGINEER")
+                        .requestMatchers(HttpMethod.GET, "/changes/**").hasAnyRole("ADMIN", "ENGINEER", "VIEWER")
+                        .requestMatchers(HttpMethod.POST, "/changes").hasRole("ENGINEER")
+                        .requestMatchers(HttpMethod.PUT, "/changes/**").hasRole("ENGINEER")
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
