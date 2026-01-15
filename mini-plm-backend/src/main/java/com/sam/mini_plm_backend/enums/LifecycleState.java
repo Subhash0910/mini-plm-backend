@@ -24,10 +24,12 @@ public enum LifecycleState {
     }
 
     public LifecycleState getNextState() {
-        if (this == IN_WORK) return PROTOTYPE_IN_WORK;
-        if (this == PROTOTYPE_IN_WORK) return PROTOTYPE;
-        if (this == PROTOTYPE) return RELEASED;
-        return this; // RELEASED and OBSOLETE don't auto-promote
+        return switch (this) {
+            case IN_WORK -> PROTOTYPE_IN_WORK;
+            case PROTOTYPE_IN_WORK -> PROTOTYPE;
+            case PROTOTYPE -> RELEASED;
+            default -> this;
+        };
     }
 
     public boolean isEditable() {
@@ -38,9 +40,7 @@ public enum LifecycleState {
         return this == RELEASED;
     }
 
-    public enum Role {
-        ADMIN,      // Full access
-        ENGINEER,   // Can create, edit, manage parts and changes
-        VIEWER      // Read-only access
+    public boolean isFinal() {
+        return this == OBSOLETE || this == RELEASED;
     }
 }

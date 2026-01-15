@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface ChangeHistoryRepository extends JpaRepository<ChangeHistory, Long> {
     List<ChangeHistory> findByChange(Change change);
-    List<ChangeHistory> findByPerformedBy(String performedBy);
-    List<ChangeHistory> findByChangeOrderByCreatedAtDesc(Change change);
+    List<ChangeHistory> findByChangedBy(String changedBy);
+    List<ChangeHistory> findByChangeOrderByChangedAtDesc(Change change);
+
 }

@@ -114,9 +114,16 @@ public class PartService {
             throw new BusinessException("Edit allowed only in IN_WORK state");
         }
 
-        existing.setName(req.getName());
-        existing.setDescription(req.getDescription());
-        existing.setVersion(req.getVersion());
+        if (req.getName() != null) {
+            existing.setName(req.getName());
+        }
+        if (req.getDescription() != null) {
+            existing.setDescription(req.getDescription());
+        }
+        if (req.getVersion() != null) {
+            existing.setVersion(req.getVersion());
+        }
+
         existing.setLastModifiedBy(modifiedBy);
         existing.setLastModifiedDate(LocalDateTime.now());
 
@@ -141,11 +148,11 @@ public class PartService {
         existing.setLastModifiedDate(LocalDateTime.now());
         partRepository.save(existing);
     }
-    // Add to PartService.java (service layer)
+
+    // Expose entity for internal service usage (e.g., LifecycleService)
     public Part getPartEntity(Long id) {
         return partRepository.findById(id)
                 .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
                 .orElseThrow(() -> new PartNotFoundException(id));
     }
-
 }

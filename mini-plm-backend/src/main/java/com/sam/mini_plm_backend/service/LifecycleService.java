@@ -3,9 +3,12 @@ package com.sam.mini_plm_backend.service;
 import com.sam.mini_plm_backend.entity.Part;
 import com.sam.mini_plm_backend.entity.StateTransitionHistory;
 import com.sam.mini_plm_backend.enums.LifecycleState;
+import com.sam.mini_plm_backend.exception.BusinessException;
+import com.sam.mini_plm_backend.exception.PartNotFoundException;
 import com.sam.mini_plm_backend.repository.PartRepository;
 import com.sam.mini_plm_backend.repository.StateTransitionHistoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,22 +19,29 @@ import java.util.List;
 @Transactional
 public class LifecycleService {
 
-    @Autowired
-    private PartRepository partRepository;
+    private static final Logger logger = LoggerFactory.getLogger(LifecycleService.class);
 
-    @Autowired
-    private StateTransitionHistoryRepository historyRepository;
+    private final PartRepository partRepository;
+    private final StateTransitionHistoryRepository historyRepository;
 
-    public Part promote(Long partId, String transitionedBy) throws Exception {
+    public LifecycleService(PartRepository partRepository, StateTransitionHistoryRepository historyRepository) {
+        this.partRepository = partRepository;
+        this.historyRepository = historyRepository;
+    }
+
+    public Part promote(Long partId, String transitionedBy) {
+        logger.info("Promoting part {} by user {}", partId, transitionedBy);
+
         Part part = partRepository.findById(partId)
-                .orElseThrow(() -> new Exception("Part not found: " + partId));
+                .orElseThrow(() -> new PartNotFoundException(partId));
 
         LifecycleState currentState = part.getLifecycleState();
         if (currentState == null) currentState = LifecycleState.IN_WORK;
 
         LifecycleState nextState = currentState.getNextState();
         if (nextState == currentState) {
-            throw new Exception("Cannot promote from " + currentState);
+            logger.warn("Cannot promote part {} from state {}", partId, currentState);
+            throw new BusinessException("Cannot promote from " + currentState);
         }
 
         recordStateTransition(part, currentState, nextState, transitionedBy, "Promoted to next state");
@@ -42,32 +52,40 @@ public class LifecycleService {
 
         if (nextState == LifecycleState.RELEASED) {
             part.setReleasedDate(LocalDateTime.now());
+            logger.info("Part {} released at {}", partId, part.getReleasedDate());
         }
 
-        return partRepository.save(part);
+        Part saved = partRepository.save(part);
+        logger.info("Part {} promoted to state {}", partId, nextState);
+        return saved;
     }
 
-    // Revise creates a NEW row (new revision) for same partNumber
-    public Part revise(Long partId, String transitionedBy) throws Exception {
+    public Part revise(Long partId, String transitionedBy) {
+        logger.info("Creating revision for part {} by user {}", partId, transitionedBy);
+
         Part oldPart = partRepository.findById(partId)
-                .orElseThrow(() -> new Exception("Part not found: " + partId));
+                .orElseThrow(() -> new PartNotFoundException(partId));
 
         if (oldPart.getLifecycleState() == LifecycleState.RELEASED) {
-            throw new Exception("Cannot revise a RELEASED part directly. Use Change (ECR/ECO).");
+            logger.warn("Cannot revise RELEASED part {}", partId);
+            throw new BusinessException("Cannot revise a RELEASED part directly. Use Change (ECR/ECO).");
         }
         if (oldPart.getLifecycleState() == LifecycleState.OBSOLETE) {
-            throw new Exception("Cannot revise an OBSOLETE part.");
+            logger.warn("Cannot revise OBSOLETE part {}", partId);
+            throw new BusinessException("Cannot revise an OBSOLETE part.");
         }
 
-        // latest-only revise
         List<Part> versions = partRepository.findByPartNumberOrderByRevisionNumberDesc(oldPart.getPartNumber());
         if (versions == null || versions.isEmpty()) {
-            throw new Exception("No revisions found for partNumber: " + oldPart.getPartNumber());
+            logger.error("No revisions found for partNumber: {}", oldPart.getPartNumber());
+            throw new BusinessException("No revisions found for partNumber: " + oldPart.getPartNumber());
         }
 
         Part latest = versions.get(0);
         if (!latest.getId().equals(oldPart.getId())) {
-            throw new Exception("Revise is allowed only on the latest revision: " + latest.getRevisionSequence());
+            logger.warn("Revise allowed only on latest revision. Latest: {}, Requested: {}",
+                    latest.getRevisionSequence(), oldPart.getRevisionSequence());
+            throw new BusinessException("Revise is allowed only on the latest revision: " + latest.getRevisionSequence());
         }
 
         Integer latestRevNum = latest.getRevisionNumber() != null ? latest.getRevisionNumber() : 1;
@@ -99,12 +117,16 @@ public class LifecycleService {
                 "Revised to v" + saved.getRevisionSequence()
         );
 
+        logger.info("New revision created for part {} - Revision: {}",
+                oldPart.getPartNumber(), saved.getRevisionSequence());
         return saved;
     }
 
-    public Part markObsolete(Long partId, String transitionedBy) throws Exception {
+    public Part markObsolete(Long partId, String transitionedBy) {
+        logger.info("Marking part {} as obsolete by user {}", partId, transitionedBy);
+
         Part part = partRepository.findById(partId)
-                .orElseThrow(() -> new Exception("Part not found: " + partId));
+                .orElseThrow(() -> new PartNotFoundException(partId));
 
         LifecycleState oldState = part.getLifecycleState();
 
@@ -115,7 +137,9 @@ public class LifecycleService {
         part.setLastModifiedBy(transitionedBy);
         part.setLastModifiedDate(LocalDateTime.now());
 
-        return partRepository.save(part);
+        Part saved = partRepository.save(part);
+        logger.info("Part {} marked as obsolete", partId);
+        return saved;
     }
 
     private void recordStateTransition(
@@ -129,5 +153,7 @@ public class LifecycleService {
                 part, fromState, toState, transitionedBy, reason
         );
         historyRepository.save(history);
+        logger.debug("State transition recorded for part {} from {} to {}",
+                part.getId(), fromState, toState);
     }
 }
