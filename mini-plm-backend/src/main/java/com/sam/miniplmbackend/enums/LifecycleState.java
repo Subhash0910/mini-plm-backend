@@ -1,7 +1,7 @@
-package com.sam.mini_plm_backend.enums;
+package com.sam.miniplmbackend.enums;
 
 /**
- * Lifecycle state for Parts.
+ * Lifecycle state for Parts (legacy package).
  */
 public enum LifecycleState {
     IN_WORK,

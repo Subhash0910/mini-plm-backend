@@ -1,26 +1,18 @@
 package com.sam.mini_plm_backend.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateBOMLineRequest {
-
-    @NotNull(message = "Component part ID is required")
     private Long componentPartId;
-
-    @NotNull(message = "Line number is required")
     private Integer lineNumber;
-
-    @NotNull(message = "Quantity is required")
-    @Positive(message = "Quantity must be positive")
-    private Double quantity;
-
+    private Integer quantity;
     private String unitOfMeasure;
     private String referenceDesignator;
     private String notes;

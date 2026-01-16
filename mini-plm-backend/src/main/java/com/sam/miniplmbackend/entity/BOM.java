@@ -1,49 +1,45 @@
 package com.sam.miniplmbackend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "BOM")
-@Getter
-@Setter
+@Table(name = "boms")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BOM {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_part_id")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_part_id", nullable = false)
     private Part parentPart;
 
-    @Column(name = "bom_name")
+    @Column(nullable = false)
     private String bomName;
 
-    @Column(name = "bom_version")
+    @Column(nullable = false)
     private String bomVersion;
 
-    @Column(name = "description")
+    @Column(length = 2000)
     private String description;
 
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Column(nullable = false)
+    private Boolean isActive;
+
+    private String createdBy;
+    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "bom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BOMLine> bomLines;
-
-    @Column(name = "created_by")
-    private String createdBy;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

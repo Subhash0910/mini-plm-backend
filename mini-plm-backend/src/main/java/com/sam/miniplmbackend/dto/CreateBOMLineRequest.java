@@ -1,6 +1,9 @@
 package com.sam.miniplmbackend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -9,7 +12,7 @@ import lombok.*;
 public class CreateBOMLineRequest {
     private Long componentPartId;
     private Integer lineNumber;
-    private Double quantity;
+    private Integer quantity;
     private String unitOfMeasure;
     private String referenceDesignator;
     private String notes;

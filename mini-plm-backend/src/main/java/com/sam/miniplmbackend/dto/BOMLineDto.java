@@ -1,6 +1,9 @@
 package com.sam.miniplmbackend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -8,11 +11,13 @@ import lombok.*;
 @AllArgsConstructor
 public class BOMLineDto {
     private Long id;
+
+    private Long componentPartId;
     private String componentPartNumber;
     private String componentPartName;
-    private String componentPartDescription;
+
     private Integer lineNumber;
-    private Double quantity;
+    private Integer quantity;
     private String unitOfMeasure;
     private String referenceDesignator;
     private String notes;

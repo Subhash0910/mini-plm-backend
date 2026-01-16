@@ -1,21 +1,8 @@
 package com.miniplm.exception;
 
 /**
- * Base Business Exception
- */
-public class BusinessException extends RuntimeException {
-    public BusinessException(String message) {
-        super(message);
-    }
-
-    public BusinessException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
-
-/**
  * Resource Not Found Exception
- * Used when a requested resource doesn't exist
+ * Used when a requested resource doesn't exist.
  */
 class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {
@@ -33,7 +20,7 @@ class ResourceNotFoundException extends RuntimeException {
 
 /**
  * Duplicate Resource Exception
- * Used when trying to create a resource that already exists
+ * Used when trying to create a resource that already exists.
  */
 class DuplicateResourceException extends RuntimeException {
     public DuplicateResourceException(String message) {
@@ -51,7 +38,7 @@ class DuplicateResourceException extends RuntimeException {
 
 /**
  * Unauthorized Exception
- * Used when user is not authenticated
+ * Used when user is not authenticated.
  */
 class UnauthorizedException extends RuntimeException {
     public UnauthorizedException(String message) {
@@ -65,7 +52,7 @@ class UnauthorizedException extends RuntimeException {
 
 /**
  * Forbidden Exception
- * Used when user doesn't have required permissions
+ * Used when user doesn't have required permissions.
  */
 class ForbiddenException extends RuntimeException {
     public ForbiddenException(String message) {
@@ -79,7 +66,7 @@ class ForbiddenException extends RuntimeException {
 
 /**
  * Invalid Operation Exception
- * Used for invalid business operations
+ * Used for invalid business operations.
  */
 class InvalidOperationException extends BusinessException {
     public InvalidOperationException(String message) {
@@ -93,7 +80,7 @@ class InvalidOperationException extends BusinessException {
 
 /**
  * Invalid State Exception
- * Used when entity is in invalid state for operation
+ * Used when entity is in invalid state for operation.
  */
 class InvalidStateException extends BusinessException {
     public InvalidStateException(String message) {

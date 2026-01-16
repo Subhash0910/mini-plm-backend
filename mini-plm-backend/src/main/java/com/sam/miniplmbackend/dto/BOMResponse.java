@@ -1,6 +1,10 @@
 package com.sam.miniplmbackend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -10,13 +14,18 @@ import java.util.List;
 @AllArgsConstructor
 public class BOMResponse {
     private Long id;
+
     private Long parentPartId;
     private String parentPartNumber;
+    private String parentPartName;
+
     private String bomName;
     private String bomVersion;
     private String description;
+
     private Boolean isActive;
     private String createdBy;
     private LocalDateTime createdAt;
+
     private List<BOMLineDto> bomLines;
 }

@@ -1,15 +1,17 @@
 package com.sam.mini_plm_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "boms")
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,39 +21,25 @@ public class BOM {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_part_id", nullable = false)
-    private Part parentPart;  // The assembly
+    private Part parentPart;
 
-    @Column(name = "bom_name", nullable = false)
-    private String bomName;  // e.g., "Revision 1.0 BOM"
+    @Column(nullable = false)
+    private String bomName;
 
-    @Column(name = "bom_version", nullable = false)
-    @Builder.Default
-    private String bomVersion = "1.0";
+    @Column(nullable = false)
+    private String bomVersion;
 
-    @Column(name = "description")
+    @Column(length = 2000)
     private String description;
 
-    @Column(name = "created_by", nullable = false)
-    private String createdBy;
+    @Column(nullable = false)
+    private Boolean isActive;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    private String createdBy;
     private LocalDateTime createdAt;
 
-    @Column(name = "is_active")
-    @Builder.Default
-    private Boolean isActive = true;  // Current BOM in use
-
-    @OneToMany(mappedBy = "bom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<BOMLine> bomLines = new ArrayList<>();
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.isActive == null) {
-            this.isActive = true;
-        }
-    }
+    @OneToMany(mappedBy = "bom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BOMLine> bomLines;
 }

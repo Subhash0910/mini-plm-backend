@@ -1,77 +1,56 @@
 package com.sam.miniplmbackend.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import java.time.LocalDateTime;
 import com.sam.miniplmbackend.enums.LifecycleState;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PART")
-@Getter
-@Setter
+@Table(name = "parts")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Part {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "part_number", unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String partNumber;
 
-    @Column(name = "name")
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description")
+    @Column(length = 2000)
     private String description;
 
-    @Column(name = "version")
+    @Column(nullable = false)
     private String version;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "lifecycle_state")
+    @Column(nullable = false)
     private LifecycleState lifecycleState;
 
-    @Column(name = "revision_number")
+    @Column(nullable = false)
     private Integer revisionNumber;
 
-    @Column(name = "revision_sequence")
+    @Column(nullable = false)
     private String revisionSequence;
 
-    @Column(name = "created_date")
     private LocalDateTime createdDate;
-
-    @Column(name = "last_modified_date")
     private LocalDateTime lastModifiedDate;
-
-    @Column(name = "released_date")
     private LocalDateTime releasedDate;
-
-    @Column(name = "obsolete_date")
     private LocalDateTime obsoleteDate;
 
-    @Column(name = "created_by")
     private String createdBy;
-
-    @Column(name = "last_modified_by")
     private String lastModifiedBy;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
-    @Column(name = "is_assembly")
-    private Boolean isAssembly = false;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = LocalDateTime.now();
-        lastModifiedDate = LocalDateTime.now();
-        if (revisionNumber == null) revisionNumber = 1;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastModifiedDate = LocalDateTime.now();
-    }
+    private Boolean isDeleted;
+    private Boolean isAssembly;
 }

@@ -1,6 +1,9 @@
 package com.sam.miniplmbackend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -11,4 +14,5 @@ public class CreatePartRequest {
     private String name;
     private String description;
     private String version;
+    private Boolean isAssembly;
 }

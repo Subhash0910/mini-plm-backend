@@ -1,12 +1,14 @@
 package com.sam.mini_plm_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "bom_lines")
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,29 +18,18 @@ public class BOMLine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "bom_id", nullable = false)
     private BOM bom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "component_part_id", nullable = false)
-    private Part componentPart;  // The sub-part
+    private Part componentPart;
 
-    @Column(name = "line_number", nullable = false)
-    private Integer lineNumber;  // 10, 20, 30... for sorting
-
-    @Column(name = "quantity", nullable = false)
-    private Double quantity;  // How many needed
-
-    @Column(name = "unit_of_measure")
-    private String unitOfMeasure;  // "EA" (each), "KG", etc.
-
-    @Column(name = "reference_designator")
-    private String referenceDesignator;  // e.g., "R1", "C2" for electronics
-
-    @Column(name = "notes")
+    private Integer lineNumber;
+    private Integer quantity;
+    private String unitOfMeasure;
+    private String referenceDesignator;
     private String notes;
-
-    @Column(name = "sequence_number")
-    private Integer sequenceNumber;  // Assembly sequence order
+    private Integer sequenceNumber;
 }
