@@ -173,6 +173,8 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- Fix: avoid "Unable to find a single main class" during repackage -->
+                    <mainClass>com.miniplm.MiniPlmApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
