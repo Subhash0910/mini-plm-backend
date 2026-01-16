@@ -45,9 +45,7 @@ public class PartMapper {
                 .name(part.getName())
                 .description(part.getDescription())
                 .version(part.getVersion())
-                .lifecycleState(part.getLifecycleState() != null
-                        ? part.getLifecycleState().name()
-                        : null)
+                .lifecycleState(part.getLifecycleState())
                 .revisionNumber(part.getRevisionNumber())
                 .revisionSequence(part.getRevisionSequence())
                 .createdDate(part.getCreatedDate())
@@ -59,6 +57,7 @@ public class PartMapper {
                 .isAssembly(part.getIsAssembly())
                 .build();
     }
+
     public LifecycleTransitionResponse toTransitionResponse(Part part) {
         if (part == null) {
             return null;
@@ -76,5 +75,4 @@ public class PartMapper {
                 .obsoleteDate(part.getObsoleteDate())
                 .build();
     }
-
 }

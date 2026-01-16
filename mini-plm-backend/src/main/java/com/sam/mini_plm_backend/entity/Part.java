@@ -40,6 +40,9 @@ public class Part {
     @Column(nullable = false)
     private Integer revisionNumber;
 
+    /**
+     * Stored revision string (e.g., "A", "B", "1.0" depending on your chosen scheme).
+     */
     @Column(nullable = false)
     private String revisionSequence;
 
@@ -53,4 +56,19 @@ public class Part {
 
     private Boolean isDeleted;
     private Boolean isAssembly;
+
+    /**
+     * Backward-compatible API used by LifecycleService.
+     * Maps revisionLetter to revisionSequence.
+     */
+    public void setRevisionLetter(String revisionLetter) {
+        this.revisionSequence = revisionLetter;
+    }
+
+    /**
+     * Backward-compatible API used by older code.
+     */
+    public String getRevisionLetter() {
+        return this.revisionSequence;
+    }
 }
